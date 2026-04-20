@@ -57,8 +57,21 @@ IF(MSVC)
 	ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 	# Enable Unicode
 	ADD_DEFINITIONS(-D_UNICODE)
-	# Enable SSE2/SSE/MMX
-	ADD_DEFINITIONS(-D__SSE2__ -D__SSE__ -D__MMX__)
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
+		# ARM64 - Use NEON intrinsics
+		message(STATUS "Building for ARM64 - enabling NEON")
+		add_compile_definitions(LUX_USE_NEON)
+		remove_definitions(-D__SSE__ -D__SSE2__ -D__MMX__ -D__AVX__)
+
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|x64")
+		# x64 - Use SSE2/SSE/MMX intrinsics
+		message(STATUS "Building for x64 - enabling SSE2/SSE/MMX")
+		ADD_DEFINITIONS(-D__SSE2__ -D__SSE__ -D__MMX__)
+		remove_definitions(-DLUX_USE_NEON)
+
+	else()
+		message(WARNING "Unknown processor: ${CMAKE_SYSTEM_PROCESSOR} - no SIMD intrinsics enabled")
+	endif()
 
 	SET(FLEX_FLAGS "--wincompat")
 
@@ -163,10 +176,10 @@ IF(APPLE)
 
 	EXECUTE_PROCESS(COMMAND uname -r OUTPUT_VARIABLE MAC_SYS) # check for actual system-version
 
-	SET(CMAKE_OSX_DEPLOYMENT_TARGET 10.9) # Minimum OS requirements for LuxCore
+	SET(CMAKE_OSX_DEPLOYMENT_TARGET 10.13) # Minimum OS requirements for LuxCore
 
   IF(${MAC_SYS} MATCHES 20)
-    SET(OSX_SYSTEM 11.1)
+    SET(OSX_SYSTEM 11.3)
     ELSEIF(${MAC_SYS} MATCHES 19)
 		SET(OSX_SYSTEM 10.15)
     ELSEIF(${MAC_SYS} MATCHES 18)

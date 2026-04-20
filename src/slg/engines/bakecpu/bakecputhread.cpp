@@ -26,6 +26,7 @@
 using namespace std;
 using namespace luxrays;
 using namespace slg;
+using namespace boost::placeholders;
 
 //------------------------------------------------------------------------------
 // BakeCPU RenderThread
@@ -307,7 +308,7 @@ void BakeCPURenderThread::RenderEyeSample(const BakeMapInfo &mapInfo, PathTracer
 	// AOV support
 	//--------------------------------------------------------------------------
 
-	if (bsdf.IsAlbedoEndPoint())
+	if (bsdf.IsAlbedoEndPoint(pathTracer.albedoSpecularSetting, pathTracer.albedoSpecularGlossinessThreshold))
 		sampleResult.albedo = bsdf.Albedo();
 
 	sampleResult.depth = 0.f;
@@ -325,8 +326,12 @@ void BakeCPURenderThread::RenderConnectToEyeCallBack(const BakeMapInfo &mapInfo,
 		const Spectrum &lightPathFlux, vector<SampleResult> &sampleResults) const {
 	BakeCPURenderEngine *engine = (BakeCPURenderEngine *)renderEngine;
 
-	// Bake only caustics
-	if (pathInfo.IsSDPath() && (!engine->pathTracer.hybridBackForwardEnable || (pathInfo.depth.depth > 0))) {
+	// Bake only caustics (note: pathInfo is not updated with the current hit point):
+	// - the path must be specular;
+	// - the current hit point must be diffuse/glossy (aka not specular)
+	if (pathInfo.IsSpecularPath() &&
+			!pathInfo.IsNearlySpecular(bsdf.GetEventTypes(), bsdf.GetGlossiness(), engine->pathTracer.hybridBackForwardGlossinessThreshold) &&
+			(!engine->pathTracer.hybridBackForwardEnable || (pathInfo.depth.depth > 0))) {
 		// Check if the hit point is on one of the objects I'm baking
 		for (u_int i = 0; i < engine->currentSceneObjsToBake.size(); ++i) {
 			if (engine->currentSceneObjsToBake[i] == bsdf.GetSceneObject()) {
@@ -552,11 +557,11 @@ void BakeCPURenderThread::RenderFunc() {
 
 	threadDone = true;
 
-	// This is done to interrupt thread pending on barrier wait
+	// This is done to stop threads pending on barrier wait
 	// inside engine->photonGICache->Update(). This can happen when an
 	// halt condition is satisfied.
-	for (u_int i = 0; i < engine->renderThreads.size(); ++i)
-		engine->renderThreads[i]->Interrupt();
+	if (engine->photonGICache)
+		engine->photonGICache->FinishUpdate(threadIndex);
 
 	//SLG_LOG("[BakeCPURenderEngine::" << threadIndex << "] Rendering thread halted");
 }

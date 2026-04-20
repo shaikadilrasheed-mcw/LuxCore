@@ -312,8 +312,12 @@ OPENCL_FORCE_INLINE float3 DisneyMaterial_EvaluateImpl(
 
 	const float3 sheenEval = DisneyMaterial_DisneySheen(color, sheen, sheenTint, LdotH);
 
-	if (directPdfW)
+	if (directPdfW) {
 		*directPdfW = DisneyMaterial_DisneyPdf(roughness, metallic, clearcoat, clearcoatGloss, anisotropicGloss, lightDir, eyeDir);
+
+		if (*directPdfW < 0.0001f)
+			return BLACK;
+	}
 
 	*event = GLOSSY | REFLECT;
 
@@ -352,7 +356,9 @@ OPENCL_FORCE_INLINE void DisneyMaterial_Evaluate(__global const Material* restri
 		Texture_GetFloatValue(material->disney.anisotropicTexIndex, hitPoint TEXTURES_PARAM),
 		Texture_GetFloatValue(material->disney.sheenTexIndex, hitPoint TEXTURES_PARAM),
 		Texture_GetFloatValue(material->disney.sheenTintTexIndex, hitPoint TEXTURES_PARAM),
-		localFilmAmount, localFilmThickness, localFilmIor);
+		localFilmAmount, localFilmThickness, localFilmIor)
+		// Evaluate() follows LuxRender habit to return the result multiplied by cosThetaToLight
+		* fabs(CosTheta(lightDir));
 
 	if (Spectrum_IsBlack(result)) {
 		MATERIAL_EVALUATE_RETURN_BLACK;
@@ -459,6 +465,12 @@ OPENCL_FORCE_INLINE void DisneyMaterial_Sample(__global const Material* restrict
 	
 	const float3 localLightDir = sampledDir;
 	const float3 localEyeDir = fixedDir;
+
+	const float NdotL = fabs(CosTheta(localLightDir));
+	const float NdotV = fabs(CosTheta(localEyeDir));
+	if (NdotL < DEFAULT_COS_EPSILON_STATIC || NdotV < DEFAULT_COS_EPSILON_STATIC) {
+		MATERIAL_SAMPLE_RETURN_BLACK;
+	}
 
 	const float pdfW = DisneyMaterial_DisneyPdf(roughnessVal, metallicVal, clearcoatVal, clearcoatGlossVal, anisotropicGlossVal,
 			localLightDir, localEyeDir);

@@ -68,6 +68,10 @@ endif()
 
 project(LuxRays)
 
+if (NOT DEFINED LuxRays_SOURCE_DIR)
+	SET(LuxRays_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+endif (NOT DEFINED LuxRays_SOURCE_DIR)
+
 ################################################################################
 #
 # Include necessary submodules
@@ -96,7 +100,11 @@ include_directories("${LuxRays_SOURCE_DIR}/deps/json-3.7.3/include")
 include_directories("${LuxRays_SOURCE_DIR}/deps/cuew/include")
 include_directories("${LuxRays_SOURCE_DIR}/deps/clew/include")
 include_directories("${LuxRays_SOURCE_DIR}/deps/optix-7.1.0/include")
-include_directories("${LuxRays_SOURCE_DIR}/deps/spdlog-1.8.0/include")
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
+	include_directories("${LuxRays_SOURCE_DIR}../WindowsCompileDeps/include/spdlog")
+else()
+	include_directories("${LuxRays_SOURCE_DIR}/deps/spdlog-1.8.0/include")
+endif()
 include_directories("${LuxRays_SOURCE_DIR}/deps/robin-hood-hashing-3.9.1/src/include")
 
 # Find dependencies
@@ -179,7 +187,6 @@ set(GENERATED_INCLUDE_DIR "${GENERATED_DIR}/include")
 
 file(MAKE_DIRECTORY ${GENERATED_INCLUDE_DIR})
 include_directories(${GENERATED_INCLUDE_DIR})
-
 
 add_subdirectory(src/luxrays)
 add_subdirectory(src/slg)
