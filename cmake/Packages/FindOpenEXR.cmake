@@ -1,4 +1,4 @@
-################################################################################
+﻿################################################################################
 # Copyright 1998-2020 by authors (see AUTHORS.txt)
 #
 #   This file is part of LuxCoreRender.
@@ -65,7 +65,7 @@ FOREACH(i ${OpenEXR_MODULES})
 ENDFOREACH(i)
 ENDIF(OPENEXR_INCLUDE_DIRS)
 
-SET(OpenEXR_LIBRARY_MODULES Iex IlmImf Half Imath IlmThread)
+SET(OpenEXR_LIBRARY_MODULES Iex Imath IlmThread OpenEXR OpenEXRUtil OpenEXRCore)
 SET(OpenEXR_LIB_SUFFIXES lib64 lib Lib lib/OpenEXR Libs x64/Release/lib)
 SET(OpenEXR_LIB_SUFFIXES_REL)
 SET(OpenEXR_LIB_SUFFIXES_DBG)
@@ -115,7 +115,10 @@ FOREACH(i ${OpenEXR_LIBRARY_MODULES})
 			${OpenEXR_${i}_LIBRARY_DBG})
 	ENDIF (OpenEXR_${i}_LIBRARY_REL AND OpenEXR_${i}_LIBRARY_DBG)
 ENDFOREACH (i)
-
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
+	# This lib file is required to solve openjph symbol errros
+	SET(OPENJPH_LIBRARY "${OPENEXR_ROOT}/../../arm64/Release/lib/openjph.lib")
+ENDIF()
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OPENEXR  DEFAULT_MSG  OPENEXR_LIBRARIES OPENEXR_INCLUDE_DIRS)
 

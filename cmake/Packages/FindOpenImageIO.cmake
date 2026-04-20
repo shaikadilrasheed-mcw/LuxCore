@@ -54,7 +54,15 @@ FIND_LIBRARY(OPENIMAGEIO_LIBRARY
   PATH_SUFFIXES
     lib64 lib x64/Release/lib
   )
-
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
+    # OpenImageIO_Util.lib should be linked to solve related missing symbol errors
+    FIND_LIBRARY(OPENIMAGEIO_UTIL_LIBRARY
+      NAMES OpenImageIO_Util_LuxCore OpenImageIO_Util
+      HINTS ${_openimageio_SEARCH_DIRS}
+      PATH_SUFFIXES lib
+    )
+    SET(OPENIMAGEIO_LIBRARY ${OPENIMAGEIO_LIBRARY} ${OPENIMAGEIO_UTIL_LIBRARY})
+ENDIF()
 # handle the QUIETLY and REQUIRED arguments and set OPENIMAGEIO_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)

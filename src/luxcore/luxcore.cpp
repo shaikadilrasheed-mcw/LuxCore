@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and     *
  * limitations under the License.                                          *
  ***************************************************************************/
-
+#include "spdlog/spdlog.h"
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/imagebufalgo.h>
 
-#include "spdlog/spdlog.h"
+
 
 #include "luxrays/core/intersectiondevice.h"
 #include "luxrays/utils/utils.h"

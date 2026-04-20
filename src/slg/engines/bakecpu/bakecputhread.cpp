@@ -26,6 +26,7 @@
 using namespace std;
 using namespace luxrays;
 using namespace slg;
+using namespace boost::placeholders;
 
 //------------------------------------------------------------------------------
 // BakeCPU RenderThread
