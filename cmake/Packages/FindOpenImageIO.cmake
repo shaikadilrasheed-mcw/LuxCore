@@ -54,7 +54,15 @@ FIND_LIBRARY(OPENIMAGEIO_LIBRARY
   PATH_SUFFIXES
     lib64 lib x64/Release/lib
   )
-
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
+    # For ARM64 build, we need to look for OpenImageIO_Util_LuxCore.lib as well, which is built as part of OpenImageIO build and contains the utility functions for OpenImageIO. This is because some of the OpenImageIO functions are implemented in this utility library and if it is not linked, the linker will complain about missing symbols related to OpenImageIO utilities.
+    FIND_LIBRARY(OPENIMAGEIO_UTIL_LIBRARY
+      NAMES OpenImageIO_Util_LuxCore OpenImageIO_Util
+      HINTS ${_openimageio_SEARCH_DIRS}
+      PATH_SUFFIXES lib
+    )
+    SET(OPENIMAGEIO_LIBRARY ${OPENIMAGEIO_LIBRARY} ${OPENIMAGEIO_UTIL_LIBRARY})
+ENDIF()
 # handle the QUIETLY and REQUIRED arguments and set OPENIMAGEIO_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)

@@ -226,8 +226,8 @@ bool EmbreeAccel::MeshPtrCompare(const Mesh *p0, const Mesh *p1) {
 }
 
 bool EmbreeAccel::Intersect(const Ray *ray, RayHit *hit) const {
-	RTCIntersectContext context;
-	rtcInitIntersectContext(&context);
+	RTCIntersectArguments args;
+	rtcInitIntersectArguments(&args);
 
 	RTCRayHit embreeRayHit;
 
@@ -249,7 +249,7 @@ bool EmbreeAccel::Intersect(const Ray *ray, RayHit *hit) const {
 	embreeRayHit.hit.primID = RTC_INVALID_GEOMETRY_ID;
 	embreeRayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 	
-	rtcIntersect1(embreeScene, &context, &embreeRayHit);
+	rtcIntersect1(embreeScene, (RTCRayHit*)&embreeRayHit, &args);
 
 	if ((embreeRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID) &&
 			// A safety check in case of not enough numerical precision. Embree
